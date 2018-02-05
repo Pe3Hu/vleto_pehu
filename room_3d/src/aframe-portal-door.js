@@ -16,6 +16,10 @@ AFRAME.registerComponent('arjs-portal-door', {
 			type: 'number',
 			default: 2,
 		},
+		radiusSphere : {	// height of the door
+			type: 'number',
+			default: 10,
+		}
 	},
 	init: function () {
 		var _this = this
@@ -23,8 +27,9 @@ AFRAME.registerComponent('arjs-portal-door', {
 		var doorWidth = this.data.doorWidth
 		var doorHeight = this.data.doorHeight
 		var imageURL = this.data.url
+		var radius = this.data.radiusSphere
 
-		this._portalDoor = new THREEx.Portal360(imageURL, doorWidth, doorHeight);
+		this._portalDoor = new THREEx.Portal360(imageURL, doorWidth, doorHeight, radius);
 		PortalDoor = this._portalDoor;
 
 		if(window.DeviceOrientationEvent)
@@ -37,14 +42,8 @@ AFRAME.registerComponent('arjs-portal-door', {
 	tick: function(now, delta){
 		this._portalDoor.update(now, delta);
 
-		if(CameraInfoDiv)
-			if(AAnchor)
-				CameraInfoDiv.innerText = AAnchor.object3D.position.x + " " + AAnchor.object3D.position.y + " " + AAnchor.object3D.position.z;
-
-		// if(globalFuncsArray)
-		// 	globalFuncsArray.forEach(function (arr_el) {
-		// 		arr_el();
-		// 	});
+		CameraInfoDiv.innerText = this._portalDoor.object3d.position.x + " " + this._portalDoor.object3d.position.y + " " + this._portalDoor.object3d.position.z + "<br>";
+		CameraInfoDiv.innerText += this._portalDoor.object3d.rotation.x + " " + this._portalDoor.object3d.rotation.y + " " + this._portalDoor.object3d.rotation.z;
 	}
 })
 
@@ -55,5 +54,7 @@ AFRAME.registerPrimitive('a-portal-door', AFRAME.utils.extendDeep({}, AFRAME.pri
 	},
 	mappings: {
 		'url': 'arjs-portal-door.url',
+		//'radius': 'arjs-portal-door.radius'
+		
 	}
 }))

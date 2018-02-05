@@ -212,10 +212,9 @@ var Qb=[Ik,Zh,_h,Qj,Qi,Pi,Ri,Ag,sg,qg,rg,yg,kh,jh,Oi,Mj];var Rb=[Jk,ki,ji,gi];va
 			{
 				this.updateChangeFlag = false;
 				setTimeout(function (){
-					PortalDoor.changeUpdateFunctionTo2();
-					AAnchor.object3D = new THREE.Object3D();
+					PortalDoor.changeUpdateFunctionTo3();
 					this.DetectMarkersFlag = false;					
-				}.bind(this), 5000);
+				}.bind(this), 1000);
 			};
 		
 		///////////////////////////////////////111111111111111111111
