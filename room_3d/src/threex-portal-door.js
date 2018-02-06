@@ -5,6 +5,9 @@ THREEx.Portal360 = function(videoImageURL, doorWidth, doorHeight, radius){
 	this.update1 = this.update1.bind(this);
 	this.update2 = this.update2.bind(this);
 	this.update3 = this.update3.bind(this);
+	this.update4 = this.update4.bind(this);
+	this.update5 = this.update5.bind(this);
+	
 	this.radius = radius;
 
 	this.update = this.update1;
@@ -75,13 +78,7 @@ THREEx.Portal360.buildTransparentMaterial = function(){
 	var material = new THREE.MeshBasicMaterial({
 		colorWrite: false // only write to z-buf
 	})
-	// an alternative to reach the same visual - this one seems way slower tho. My guess is it is hitting a slow-path in gpu
-	// var material   = new THREE.MeshBasicMaterial();
-	// material.color.set('black')
-	// material.opacity   = 0;
-	// material.blending  = THREE.NoBlending;
-	
-	// cache the material
+
 	THREEx.Portal360.buildTransparentMaterial.material = material
 	
 	return material		
@@ -128,11 +125,6 @@ THREEx.Portal360.buildSquareCache = function(){
  */
 THREEx.Portal360.prototype._buildInsideMesh	= function(texture360, doorWidth, doorHeight, radius){
 	var doorInsideCenter = new THREE.Group
-
-	// var squareCache = THREEx.Portal360.buildSquareCache()
-	// squareCache.scale.y = doorWidth
-	// squareCache.scale.y = doorHeight
-	// doorInsideCenter.add( squareCache )
 
 	var geometry = new THREE.PlaneGeometry(doorWidth, doorHeight)
 	var material = THREEx.Portal360.buildTransparentMaterial()
@@ -184,10 +176,8 @@ THREEx.Portal360.prototype._buildOutsideMesh = function(texture360, doorWidth, d
 	//		add 360 sphere
 	//////////////////////////////////////////////////////////////////////////////
 	// add 360 texture
-	var radius360Sphere = radius
-	// var radius360Sphere = 1
+	var radius360Sphere = radius;
 
-	// build half sphere geometry
 	var geometry = new THREE.SphereGeometry( radius360Sphere, 16, 16, Math.PI, Math.PI, 0, Math.PI).rotateZ(Math.PI)
 	// fix UVs
 	geometry.faceVertexUvs[0].forEach(function(faceUvs){
@@ -201,8 +191,6 @@ THREEx.Portal360.prototype._buildOutsideMesh = function(texture360, doorWidth, d
 		// opacity: 0.9,
 		side: THREE.BackSide,
 	});
-	// var geometry = new THREE.SphereGeometry( radius360Sphere, 16, 16);
-	// var material = new THREE.MeshNormalMaterial()
 	var sphere360Mesh = new THREE.Mesh( geometry, material );
 	sphere360Mesh.position.z = -radius360Sphere*0.01
 	doorOutsideCenter.add(sphere360Mesh)
@@ -267,47 +255,6 @@ THREEx.Portal360.prototype._buildRectangularFrame = function(radius, width, heig
  */
 THREEx.Portal360.prototype._buildSpriteMesh = function(width, height){
 
-	// var VertexShader = 
-	// "uniform vec3 viewVector;"+
-	// "uniform float c;"+
-	// "uniform float p;"+
-	// "varying float intensity;"+
-	// "void main() "+
-	// "{"+
-	// "vec3 vNormal = normalize( normalMatrix * normal );"+
-	//  "	vec3 vNormel = normalize( normalMatrix * viewVector );"+
-	// "intensity = pow( c - dot(vNormal, vNormel), p );"+
-		
-	// "gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );"+
-	// "}";
-
-	// var FragmentShader = 
-	// "uniform vec3 glowColor;"+
-	// "varying float intensity;"+
-	// "void main()"+ 
-	// "{"+
-	// "	vec3 glow = glowColor * intensity;"+
-	// "    gl_FragColor = vec4( glow, 1.0 );"+
-	// "}";
-
-
-	// var material = new THREE.ShaderMaterial( 
-	// {
-	//     uniforms: 
-	// 	{ 
-	// 		"c":   { type: "f", value: 0.3 },
-	// 		"p":   { type: "f", value: 3.5 },
-	// 		glowColor: { type: "c", value: new THREE.Color(0xffff00) }
-	// 		// ,
-	// 		// viewVector: { type: "v3", value: camera.position }
-	// 	},
-	// 	vertexShader: VertexShader,
-	// 	fragmentShader: FragmentShader,
-	// 	side: THREE.FrontSide,
-	// 	blending: THREE.AdditiveBlending,
-	// 	transparent: true
-	// }   );
-
 	var geometry = new THREE.PlaneGeometry(width, height);
 	var material = new THREE.MeshNormalMaterial();
 	var SpriteMesh = new THREE.Mesh(geometry, material);
@@ -324,77 +271,128 @@ THREEx.Portal360.prototype._buildSpriteMesh = function(width, height){
 };	
 
 //////////////////////////////////////////////////////////////////////////////
-//		update function
+//	                         	update function
 //////////////////////////////////////////////////////////////////////////////
 
+THREEx.Portal360.prototype.changeUpdateFunctionTo2 = function ()
+{
+	this.SceneCopy = AAnchor.object3D;
+	AAnchor.object3D = new THREE.Scene();
+	this.n = 100;
+	/*this.rx = (this.SceneCopy.rotation.x-Math.Pi/2)/this.n;	
+	this.ry = this.SceneCopy.rotation.y/this.n;	
+	this.rz = this.SceneCopy.rotation.z/this.n;*/
+	this.px = this.SceneCopy.position.x / this.n;
+	this.py = this.SceneCopy.position.y / this.n;
+	this.update = this.update2;
+};
+
+THREEx.Portal360.prototype.changeUpdateFunctionTo3 = function ()
+{
+	this.update = this.update3;
+};
+
+
+THREEx.Portal360.prototype.changeUpdateFunctionTo4 = function ()
+{
+	this.AntiVec = this.SceneCopy.position.clone();
+	this.AntiVec.normalize();
+	this.AntiVec.multiplyScalar(-0.05);	
+	this.update = this.update4;
+};
 
 THREEx.Portal360.prototype.update1 = function (now, delta) {
 	// determine if the user is isOutsidePortal
 	var localPosition = new THREE.Vector3();
 	this.object3d.worldToLocal(localPosition)
 	var isOutsidePortal = localPosition.z >= 0 ? true : false
-
-	// handle mesh visibility based on isOutsidePortal
-	// if( isOutsidePortal ){
-	// 	this.outsideMesh.visible = true;
-	// 	this.insideMesh.visible = false;
-	// }else{
-	// 	this.outsideMesh.visible = false;
-	// 	this.insideMesh.visible = true;
-	// }
 }
 
-THREEx.Portal360.prototype.changeUpdateFunctionTo2 = function ()
+THREEx.Portal360.prototype.update2 = function() 
 {
-	this.SceneCopy = AAnchor.object3D;
-	AAnchor.object3D = new THREE.Scene();
-	// this.SceneCopy.position.copy(AAnchor.object3D.position);
-	// this.SceneCopy.rotation.copy(AAnchor.object3D.rotation);
-	// AAnchor.object3D.remove(PortalDoor.object3d);
-	// this.SceneCopy.add(PortalDoor.object3d);
-	// GlobalScene = GlobalScene.object3D;
-	// GlobalScene.add(this.SceneCopy);
+	/*if (this.SceneCopy.rotation.x !== Math.Pi/2)
+		this.SceneCopy.rotation.x-=this.rx*Math.PI/360;
 
-	this.AntiVec = this.SceneCopy.position.clone();
-	this.AntiVec.normalize();
-	this.AntiVec.multiplyScalar(-0.05);	
+	if (this.SceneCopy.rotation.y !== 0)
+		this.SceneCopy.rotation.y-=this.ry*Math.PI/360;
 
-	this.update = this.update2;
+	if (this.SceneCopy.rotation.z !== 0)
+		this.SceneCopy.rotation.z-=this.rz*Math.PI/360;*/
+	if(this.SceneCopy.rotation.x !== Math.PI/2)
+		if (Math.abs(this.SceneCopy.rotation.x-Math.PI/2)>Math.PI/180)
+			if (this.SceneCopy.rotation.x -Math.PI/2> 0)
+				this.SceneCopy.rotation.x-=Math.PI/360;
+			else
+				this.SceneCopy.rotation.x+=Math.PI/360;
+		else this.SceneCopy.rotation.x = Math.PI/2;
+
+	if(this.SceneCopy.rotation.y !== 0)
+		if (Math.abs(this.SceneCopy.rotation.y)>Math.PI/180)
+			if (this.SceneCopy.rotation.y > 0)
+				this.SceneCopy.rotation.y-=Math.PI/360;
+			else
+				this.SceneCopy.rotation.y+=Math.PI/360;
+		else this.SceneCopy.rotation.y = 0;
+
+	if(this.SceneCopy.rotation.z !== 0)
+		if (Math.abs(this.SceneCopy.rotation.z)>Math.PI/180)
+			if (this.SceneCopy.rotation.z > 0)
+				this.SceneCopy.rotation.z-=Math.PI/360;
+			else
+				this.SceneCopy.rotation.z+=Math.PI/360;	
+		else this.SceneCopy.rotation.z = 0;
+	if (this.SceneCopy.rotation.x === Math.PI/2 && this.SceneCopy.rotation.y === 0 && this.SceneCopy.rotation.z === 0)
+		this.changeUpdateFunctionTo3();
 };
 
-THREEx.Portal360.prototype.update2 = function(now, delta) 
+THREEx.Portal360.prototype.update3 = function() 
+{	
+/*
+	if (this.SceneCopy.position.x !== 0)
+		this.SceneCopy.position.x -= this.px;
+
+	if (this.SceneCopy.position.y !== 0)
+		this.SceneCopy.position.y -= this.py;*/
+	if (this.SceneCopy.position.x !== 0)
+		if (Math.abs(this.SceneCopy.position.x)>0.02)
+			if (this.SceneCopy.position.x> 0)
+				this.SceneCopy.position.x-=0.01;
+			else
+				this.SceneCopy.position.x+=0.01;
+		else this.SceneCopy.position.x = 0;
+
+	if (this.SceneCopy.position.y !== 0)
+		if (Math.abs(this.SceneCopy.position.y)>0.02)
+			if (this.SceneCopy.position.y > 0)
+				this.SceneCopy.position.y-=0.01;
+			else
+				this.SceneCopy.position.y+=0.01;
+		else this.SceneCopy.position.y = 0;
+	if (this.SceneCopy.position.x === 0 && this.SceneCopy.position.y === 0)
+		this.changeUpdateFunctionTo4();
+};
+
+THREEx.Portal360.prototype.update4 = function() 
 {
-	if(this.SceneCopy.position.length() < 0.5)
+	/*if(this.SceneCopy.position.length() < 0.5)
 	{
 		//this.SceneCopy.position.set(0,0,0);
 		this.changeUpdateFunctionTo3();
 	} else {
 		this.SceneCopy.position.add(this.AntiVec);
-	}
+	}*/
+	this.SceneCopy.position.add(this.AntiVec);
+	if (this.SceneCopy.position.z > 0)	
+		this.update = this.update5;
 };
 
-THREEx.Portal360.prototype.changeUpdateFunctionTo3 = function ()
+
+THREEx.Portal360.prototype.update5 = function() 
 {
 
-/*
-	this.AntiVec = new THREE.Vector3(0,0,0.01*this.radius );
-	this.AntiVec.normalize();
-	this.AntiVec.multiplyScalar(0.005);*/
-	this.SceneCopy = AAnchor.object3D;
-	AAnchor.object3D = new THREE.Scene();
-	// this.SceneCopy.position.copy(AAnchor.object3D.position);
-	// this.SceneCopy.rotation.copy(AAnchor.object3D.rotation);
-	// AAnchor.object3D.remove(PortalDoor.object3d);
-	// this.SceneCopy.add(PortalDoor.object3d);
-	// GlobalScene = GlobalScene.object3D;
-	// GlobalScene.add(this.SceneCopy);
-
-	this.AntiVec = this.SceneCopy.position.clone();
-	this.AntiVec.normalize();
-	this.AntiVec.multiplyScalar(-0.05);	
-
-	this.update = this.update3;
+	
 };
+
 
 /*
 THREEx.Portal360.prototype.rotateAroundObjectAxis = funcition(axis, radians) {
@@ -424,34 +422,6 @@ THREEx.Portal360.prototype.rotateAroundObjectAxis = funcition(axis, radians) {
         this.position.z = newPos.z;;                
 
 };*/
-
-THREEx.Portal360.prototype.update3 = function() {
-
-		this.SceneCopy.rotation.set(90, 0 ,0); //(new THREE.Vector3(0,0,0));
-		
-        //this.rotateAroundObjectAxis(new THREE.Vector3(0,1,0), -angleDelta);
-    	//rotateAroundWorldAxis(this, new THREE.Vector3(0,1,0), angleDelta);
-
-	/*if ( isUserInteracting === false ) {
-
-		lon += 0.1;
-
-	}
-
-	lat = Math.max( - 85, Math.min( 85, lat ) );
-	phi = THREE.Math.degToRad( 90 - lat );
-	theta = THREE.Math.degToRad( lon );
-
-	target.x = 500 * Math.sin( phi ) * Math.cos( theta );
-	target.y = 500 * Math.cos( phi );
-	target.z = 500 * Math.sin( phi ) * Math.sin( theta );
-
-	camera.lookAt( target );
-
-	renderer.render( scene, camera );*/
-
-};
-
 
 THREEx.Portal360.prototype.onOrientationEvent = function (event)
 {
