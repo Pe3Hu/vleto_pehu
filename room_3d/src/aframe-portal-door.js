@@ -42,8 +42,8 @@ AFRAME.registerComponent('arjs-portal-door', {
 	tick: function(now, delta){
 		this._portalDoor.update(now, delta);
 
-		CameraInfoDiv.innerText = this._portalDoor.object3d.position.x + " " + this._portalDoor.object3d.position.y + " " + this._portalDoor.object3d.position.z + "<br>";
-		CameraInfoDiv.innerText += this._portalDoor.object3d.rotation.x + " " + this._portalDoor.object3d.rotation.y + " " + this._portalDoor.object3d.rotation.z;
+		//CameraInfoDiv.innerText = this._portalDoor.object3d.position.x + " " + this._portalDoor.object3d.position.y + " " + this._portalDoor.object3d.position.z + "<br>";
+		//CameraInfoDiv.innerText += this._portalDoor.object3d.rotation.x + " " + this._portalDoor.object3d.rotation.y + " " + this._portalDoor.object3d.rotation.z;
 	}
 })
 

@@ -7,15 +7,20 @@ THREEx.Portal360 = function(videoImageURL, doorWidth, doorHeight, radius){
 	this.update3 = this.update3.bind(this);
 	this.update4 = this.update4.bind(this);
 	this.update5 = this.update5.bind(this);
-	
+			/// 
+	this.deviceMotionInterval = 0;
+	this.dt = 0.03;
+	this.phi = 0;
+	this.theta = 0;
+	this.target = new THREE.Vector3(0,0,500);	
 	this.radius = radius;
 
 	this.update = this.update1;
 
-	var doorCenter = new THREE.Group
+	var doorCenter = new THREE.Group;
 	this.doorCenter = doorCenter;
-	doorCenter.position.y = doorHeight/2
-	this.object3d = doorCenter
+	doorCenter.position.y = doorHeight/2;
+	this.object3d = doorCenter;
 
 	//////////////////////////////////////////////////////////////////////////////
 	//		build texture360
@@ -65,8 +70,8 @@ THREEx.Portal360 = function(videoImageURL, doorWidth, doorHeight, radius){
 
 	doorCenter.add(frameMesh);
 //	doorCenter.add(glowMesh);
-
 }
+			
 //////////////////////////////////////////////////////////////////////////////
 //		Code Separator
 //////////////////////////////////////////////////////////////////////////////
@@ -276,14 +281,12 @@ THREEx.Portal360.prototype._buildSpriteMesh = function(width, height){
 
 THREEx.Portal360.prototype.changeUpdateFunctionTo2 = function ()
 {
-	this.SceneCopy = AAnchor.object3D;
+	this.PortalScene = AAnchor.object3D;
 	AAnchor.object3D = new THREE.Scene();
 	this.n = 100;
-	/*this.rx = (this.SceneCopy.rotation.x-Math.Pi/2)/this.n;	
-	this.ry = this.SceneCopy.rotation.y/this.n;	
-	this.rz = this.SceneCopy.rotation.z/this.n;*/
-	this.px = this.SceneCopy.position.x / this.n;
-	this.py = this.SceneCopy.position.y / this.n;
+	this.camera = cameraDom.object3D;
+	this.px = this.PortalScene.position.x / this.n;
+	this.py = this.PortalScene.position.y / this.n;
 	this.update = this.update2;
 };
 
@@ -295,9 +298,9 @@ THREEx.Portal360.prototype.changeUpdateFunctionTo3 = function ()
 
 THREEx.Portal360.prototype.changeUpdateFunctionTo4 = function ()
 {
-	this.AntiVec = this.SceneCopy.position.clone();
+	this.AntiVec = this.PortalScene.position.clone();
 	this.AntiVec.normalize();
-	this.AntiVec.multiplyScalar(-0.05);	
+	this.AntiVec.multiplyScalar(-0.1);	
 	this.update = this.update4;
 };
 
@@ -310,119 +313,80 @@ THREEx.Portal360.prototype.update1 = function (now, delta) {
 
 THREEx.Portal360.prototype.update2 = function() 
 {
-	/*if (this.SceneCopy.rotation.x !== Math.Pi/2)
-		this.SceneCopy.rotation.x-=this.rx*Math.PI/360;
-
-	if (this.SceneCopy.rotation.y !== 0)
-		this.SceneCopy.rotation.y-=this.ry*Math.PI/360;
-
-	if (this.SceneCopy.rotation.z !== 0)
-		this.SceneCopy.rotation.z-=this.rz*Math.PI/360;*/
-	if(this.SceneCopy.rotation.x !== Math.PI/2)
-		if (Math.abs(this.SceneCopy.rotation.x-Math.PI/2)>Math.PI/180)
-			if (this.SceneCopy.rotation.x -Math.PI/2> 0)
-				this.SceneCopy.rotation.x-=Math.PI/360;
+	this.rotate_speed = Math.PI/90;
+	if(this.PortalScene.rotation.x !== Math.PI/2)
+		if (Math.abs(this.PortalScene.rotation.x-Math.PI/2)>this.rotate_speed)
+			if (this.PortalScene.rotation.x -Math.PI/2> 0)
+				this.PortalScene.rotation.x-=this.rotate_speed/2;
 			else
-				this.SceneCopy.rotation.x+=Math.PI/360;
-		else this.SceneCopy.rotation.x = Math.PI/2;
+				this.PortalScene.rotation.x+=this.rotate_speed/2;
+		else this.PortalScene.rotation.x = Math.PI/2;
 
-	if(this.SceneCopy.rotation.y !== 0)
-		if (Math.abs(this.SceneCopy.rotation.y)>Math.PI/180)
-			if (this.SceneCopy.rotation.y > 0)
-				this.SceneCopy.rotation.y-=Math.PI/360;
+	if(this.PortalScene.rotation.y !== 0)
+		if (Math.abs(this.PortalScene.rotation.y)>this.rotate_speed)
+			if (this.PortalScene.rotation.y > 0)
+				this.PortalScene.rotation.y-=this.rotate_speed/2;
 			else
-				this.SceneCopy.rotation.y+=Math.PI/360;
-		else this.SceneCopy.rotation.y = 0;
+				this.PortalScene.rotation.y+=this.rotate_speed/2;
+		else this.PortalScene.rotation.y = 0;
 
-	if(this.SceneCopy.rotation.z !== 0)
-		if (Math.abs(this.SceneCopy.rotation.z)>Math.PI/180)
-			if (this.SceneCopy.rotation.z > 0)
-				this.SceneCopy.rotation.z-=Math.PI/360;
+	if(this.PortalScene.rotation.z !== 0)
+		if (Math.abs(this.PortalScene.rotation.z)>Math.PI/180)
+			if (this.PortalScene.rotation.z > 0)
+				this.PortalScene.rotation.z-=this.rotate_speed/2;
 			else
-				this.SceneCopy.rotation.z+=Math.PI/360;	
-		else this.SceneCopy.rotation.z = 0;
-	if (this.SceneCopy.rotation.x === Math.PI/2 && this.SceneCopy.rotation.y === 0 && this.SceneCopy.rotation.z === 0)
+				this.PortalScene.rotation.z+=this.rotate_speed/2;	
+		else this.PortalScene.rotation.z = 0;
+	if (this.PortalScene.rotation.x === Math.PI/2 && this.PortalScene.rotation.y === 0 && this.PortalScene.rotation.z === 0)
 		this.changeUpdateFunctionTo3();
 };
 
 THREEx.Portal360.prototype.update3 = function() 
 {	
-/*
-	if (this.SceneCopy.position.x !== 0)
-		this.SceneCopy.position.x -= this.px;
-
-	if (this.SceneCopy.position.y !== 0)
-		this.SceneCopy.position.y -= this.py;*/
-	if (this.SceneCopy.position.x !== 0)
-		if (Math.abs(this.SceneCopy.position.x)>0.02)
-			if (this.SceneCopy.position.x> 0)
-				this.SceneCopy.position.x-=0.01;
+	this.move_speed = 0.08;
+	if (this.PortalScene.position.x !== 0)
+		if (Math.abs(this.PortalScene.position.x)>this.move_speed)
+			if (this.PortalScene.position.x> 0)
+				this.PortalScene.position.x-=this.move_speed/2;
 			else
-				this.SceneCopy.position.x+=0.01;
-		else this.SceneCopy.position.x = 0;
+				this.PortalScene.position.x+=this.move_speed/2;
+		else this.PortalScene.position.x = 0;
 
-	if (this.SceneCopy.position.y !== 0)
-		if (Math.abs(this.SceneCopy.position.y)>0.02)
-			if (this.SceneCopy.position.y > 0)
-				this.SceneCopy.position.y-=0.01;
+	if (this.PortalScene.position.y !== 0)
+		if (Math.abs(this.PortalScene.position.y)>this.move_speed)
+			if (this.PortalScene.position.y > 0)
+				this.PortalScene.position.y-=this.move_speed/2;
 			else
-				this.SceneCopy.position.y+=0.01;
-		else this.SceneCopy.position.y = 0;
-	if (this.SceneCopy.position.x === 0 && this.SceneCopy.position.y === 0)
+				this.PortalScene.position.y+=this.move_speed/2;
+		else this.PortalScene.position.y = 0;
+	if (this.PortalScene.position.x === 0 && this.PortalScene.position.y === 0)
 		this.changeUpdateFunctionTo4();
 };
 
 THREEx.Portal360.prototype.update4 = function() 
 {
-	/*if(this.SceneCopy.position.length() < 0.5)
-	{
-		//this.SceneCopy.position.set(0,0,0);
-		this.changeUpdateFunctionTo3();
-	} else {
-		this.SceneCopy.position.add(this.AntiVec);
-	}*/
-	this.SceneCopy.position.add(this.AntiVec);
-	if (this.SceneCopy.position.z > 0)	
-		this.update = this.update5;
+	if (this.PortalScene.position.z < 0)
+		this.PortalScene.position.add(this.AntiVec);	
+		else
+			this.update = this.update5;
 };
 
 
 THREEx.Portal360.prototype.update5 = function() 
 {
+	if(OrientationParameters.alpha !== null && OrientationParameters.beta !== null)
+		{
+			this.phi+=OrientationParameters.alpha*this.dt*OrientationParameters.deviceMotionInterval*0.1;
+			this.theta+=OrientationParameters.beta*this.dt*OrientationParameters.deviceMotionInterval*0.1;
+		}
 
-	
+		this.target.x =  -500*Math.cos( this.phi )* Math.sin( this.theta );
+		this.target.y =  -500*Math.sin( this.phi )* Math.cos( this.theta );
+		//this.target.z =  500*(Math.sin( this.phi ) * Math.sin( this.theta ));
+
+		this.camera.lookAt( this.target );
+
 };
-
-
-/*
-THREEx.Portal360.prototype.rotateAroundObjectAxis = funcition(axis, radians) {
-
-        rotObjectMatrix = new THREE.Matrix4();
-        rotObjectMatrix.makeRotationAxis(axis.normalize(), radians);                
-        this.matrix.multiply(rotObjectMatrix);
-        this.rotation.setFromRotationMatrix(this.matrix);
-
-};
-
-THREEx.Portal360.prototype.rotateAroundObjectAxis = funcition(axis, radians) {
-  		
-
-  		var rotWorldMatrix = new THREE.Matrix4();
-        rotWorldMatrix.makeRotationAxis(axis.normalize(), radians);
-
-        var currentPos = new THREE.Vector4(this.position.x, this.position.y, this.position.z, 1);
-        var newPos = currentPos.applyMatrix4(rotWorldMatrix);
-
-        rotWorldMatrix.multiply(this.matrix);
-        this.matrix = rotWorldMatrix;
-        this.rotation.setFromRotationMatrix(this.matrix);
-
-        this.position.x = newPos.x;
-        this.position.y = newPos.y;	
-        this.position.z = newPos.z;;                
-
-};*/
-
 THREEx.Portal360.prototype.onOrientationEvent = function (event)
 {
 
